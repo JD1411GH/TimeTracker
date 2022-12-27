@@ -16,31 +16,46 @@ config.read(configfile)
 
 class Db:
     def __init__(self) -> None:
+        # get google sheet
         gc = gspread.oauth(credentials_filename='credentials.json',
                            authorized_user_filename='token.json')
         sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
-        ws = sheet.get_worksheet(0)
-        self.df_timerdb = pd.DataFrame(ws.get_all_records())
-        self.df_timerdb['date'] = pd.to_datetime(self.df_timerdb['date'])
-        self.df_timerdb.set_index('date', inplace=True)
-        self.df_timerdb['duration'] = pd.to_numeric(
-            self.df_timerdb['duration'])
+        ws = sheet.worksheet('timer')
+        self.df_timer = pd.DataFrame(ws.get_all_records())
+        ws = sheet.worksheet('day')
+        self.df_day = pd.DataFrame(ws.get_all_records())
+
+        # format the received data for timer
+        self.df_timer.set_index('id', inplace=True)
+        self.df_timer['date'] = pd.to_datetime(self.df_timer['date'])
+        self.df_timer['duration'] = pd.to_numeric(
+            self.df_timer['duration'])
+
+        # format the received data for day
+        self.df_day['date'] = pd.to_datetime(self.df_day['date'])
+        self.df_day.set_index('date', inplace=True)
+        self.df_day['correction'] = pd.to_numeric(
+            self.df_day['correction'])
+
 
     def get_week_data(self, wk=None):
         # filter for current week
-        today = date.today()
-        start = today - timedelta(days=today.weekday())
-        startdate = pd.to_datetime(start)
-        enddate = pd.to_datetime(start + timedelta(days=6))
-        filter = self.df_timerdb.index.to_series().between(startdate, enddate)
-        df = self.df_timerdb[filter]
+        if wk is None:
+            curweek = pd.Timestamp.today().week
+        else:
+            curweek = wk
+        filter = self.df_timer['date'].apply(lambda x: x.week) == curweek
+        df_timer_filtered = self.df_timer[filter]
+        filter = self.df_day.index.to_series().apply(lambda x: x.week) == curweek
+        df_day_filtered = self.df_day[filter]
 
-        # calculate duration and workday
-        pivot_workday = pd.pivot_table(data=df,
-                                       index='date', values='workday', aggfunc='max')
-        pivot_duration = pd.pivot_table(data=df,
-                                        index='date', values='duration', aggfunc='sum')
-        pivot = pd.concat([pivot_workday, pivot_duration], axis=1)
+        # calculate duration
+        pivot = pd.pivot_table(data=df_timer_filtered,
+                               index='date', values='duration', aggfunc='sum')
+        # pivot = pivot.add(df_day_filtered['correction'])
+        # pivot = pd.concat([pivot, df_day_filtered['workday']], axis=1)
+        print(pivot)
+        exit()
 
         # add day of week
         list_days = []
