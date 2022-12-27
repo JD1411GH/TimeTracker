@@ -27,20 +27,27 @@ class Db:
             self.df_timerdb['duration'])
 
     def get_week_data(self, wk=None):
-        pivot_workday = pd.pivot_table(data=self.df_timerdb,
-                                       index='date', values='workday', aggfunc='max')
-
-        pivot_duration = pd.pivot_table(data=self.df_timerdb,
-                               index='date', values='duration', aggfunc='sum')
-
-        pivot = pd.concat([pivot_workday, pivot_duration], axis=1)
-
         # filter for current week
         today = date.today()
         start = today - timedelta(days=today.weekday())
         startdate = pd.to_datetime(start)
         enddate = pd.to_datetime(start + timedelta(days=6))
-        filter = pivot.index.to_series().between(startdate, enddate)
-        pivot = pivot[filter]
+        filter = self.df_timerdb.index.to_series().between(startdate, enddate)
+        df = self.df_timerdb[filter]
+
+        # calculate duration and workday
+        pivot_workday = pd.pivot_table(data=df,
+                                       index='date', values='workday', aggfunc='max')
+        pivot_duration = pd.pivot_table(data=df,
+                                        index='date', values='duration', aggfunc='sum')
+        pivot = pd.concat([pivot_workday, pivot_duration], axis=1)
+
+        # add day of week
+        list_days = []
+        for (idx, row) in pivot.iterrows():
+            day_name = ['Monday', 'Tuesday', 'Wednesday',
+                        'Thursday', 'Friday', 'Saturday', 'Sunday']
+            list_days.append(day_name[idx.dayofweek])
+        pivot['day'] = list_days
 
         return pivot
