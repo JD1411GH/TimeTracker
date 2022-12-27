@@ -4,8 +4,8 @@ import os
 import argparse
 
 # import internal modules
-from Menu import *
-from Utils import *
+from menu import *
+from utils import *
 from gui import *
 from cli import *
 
