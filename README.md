@@ -1,2 +1,2 @@
 # TimeTracker
-Office IN and OUT time tracker
+Working IN and OUT time tracker
