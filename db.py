@@ -49,14 +49,10 @@ class Db:
         filter = self.df_day.index.to_series().apply(lambda x: x.week) == curweek
         df_day_filtered = self.df_day[filter]
 
-        # calculate duration
+        # create pivot day-wise
         pivot = pd.pivot_table(data=df_timer_filtered,
                                index='date', values='duration', aggfunc='sum')
-        # pivot = pivot.add(df_day_filtered['correction'])
-        # pivot = pd.concat([pivot, df_day_filtered['workday']], axis=1)
-        print(pivot)
-        exit()
-
+        
         # add day of week
         list_days = []
         for (idx, row) in pivot.iterrows():
@@ -64,5 +60,14 @@ class Db:
                         'Thursday', 'Friday', 'Saturday', 'Sunday']
             list_days.append(day_name[idx.dayofweek])
         pivot['day'] = list_days
+
+        # add workday status
+        pivot = pd.concat([pivot, df_day_filtered['workday']], axis=1)
+
+        # calculate duration
+        s_duration = pivot['duration'].add(df_day_filtered['correction'])
+        pivot.drop('duration', axis=1, inplace=True)
+        s_duration.rename('duration', inplace=True)
+        pivot = pd.concat([pivot, s_duration], axis=1)
 
         return pivot
