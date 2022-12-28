@@ -28,14 +28,19 @@ class Cli:
             menu.show()
 
     def show_stats(self, wk=None):
-        df = self.timerdb.get_week_data()
-        print(df)
+        df = self.timerdb.get_week_data(wk)
+        if df is not None:
+            print(df)
 
     def start_timer(self):
-        pass
+        status = self.timerdb.start_timer()
+        myassert(status, "Timer could not be started")
+        self.show_menu()
 
     def stop_timer(self):
-        pass
+        status = self.timerdb.stop_timer()
+        myassert(status, "Timer could not be stopped")
+        self.show_menu()
 
     def add_correction(self):
         pass
