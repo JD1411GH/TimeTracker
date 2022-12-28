@@ -23,13 +23,15 @@ class Db:
         self._gspread_read()
 
         # format the received data for timer
-        self.df_timer['start_time'] = pd.to_datetime(self.df_timer['start_time'])
-        self.df_timer['end_time'] = pd.to_datetime(self.df_timer['end_time'])
+        if self.df_timer.size != 0:
+            self.df_timer['start_time'] = pd.to_datetime(self.df_timer['start_time'])
+            self.df_timer['end_time'] = pd.to_datetime(self.df_timer['end_time'])
 
         # format the received data for day
-        # self.df_day['date'] = pd.to_datetime(self.df_day['date']).apply(lambda d: d.date())
-        # self.df_day.set_index('date', inplace=True)
-        # self.df_day['correction'] = pd.to_numeric(self.df_day['correction'])
+        if self.df_day.size != 0:
+            self.df_day['date'] = pd.to_datetime(self.df_day['date']).apply(lambda d: d.date())
+            self.df_day.set_index('date', inplace=True)
+            self.df_day['correction'] = pd.to_numeric(self.df_day['correction'])
 
     def _gspread_read(self):
         gc = gspread.oauth(credentials_filename='credentials.json',
@@ -41,9 +43,9 @@ class Db:
         self.df_day = pd.DataFrame(ws.get_all_records())
 
     def _gspread_write(self):
-        # convert database from timestamp to string
+        # convert timer database from timestamp to string
         def _to_str(timestamp):
-            if timestamp is not None:
+            if timestamp is not None and not pd.isnull(timestamp):
                 return timestamp.strftime('%Y-%m-%d %X')
             else:
                 return ""
@@ -51,13 +53,20 @@ class Db:
         _df_timer['start_time'] = self.df_timer['start_time'].apply(_to_str)
         _df_timer['end_time'] = self.df_timer['end_time'].apply(_to_str)
 
-        # write to gsheet
+        # write timer to gsheet
         gc = gspread.oauth(credentials_filename='credentials.json',
                         authorized_user_filename='token.json')
         sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
         ws = sheet.worksheet('timer')
         ws.update([_df_timer.columns.values.tolist()] +
                 _df_timer.values.tolist())
+
+        # write day to gsheet
+        _df_day = self.df_day.reset_index()
+        _df_day['date'] = _df_day['date'].apply(lambda d: d.isoformat())
+        ws = sheet.worksheet('day')
+        ws.update([_df_day.columns.values.tolist()] +
+                _df_day.values.tolist())
 
     def get_week_data(self, wk=None):
         # check for empty database
@@ -132,6 +141,17 @@ class Db:
                 'end_time': [None]
             })
             self.df_timer = pd.concat([self.df_timer, df_start], ignore_index=True)
+            
+            # create entry for day
+            _df_day = pd.DataFrame({
+                'date': [pd.Timestamp.now().date()],
+                'workday': [1],
+                'correction': [0]
+            })
+            _df_day.set_index('date', inplace=True)
+            self.df_day = pd.concat([self.df_day, _df_day], axis=1)
+
+            # write to gsheet
             self._gspread_write()
             return True
 
@@ -144,5 +164,7 @@ class Db:
             return False
         else:
             idx = self.df_timer[select].index.to_list()[0]
-            self.df_timer.iloc[0]['end_time'] = pd.Timestamp.now()
-        self._gspread_write()
+            self.df_timer.iloc[idx]['end_time'] = pd.Timestamp.now()
+            self._gspread_write()
+            return True
+        
