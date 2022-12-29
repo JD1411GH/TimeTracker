@@ -141,12 +141,13 @@ class Db:
         pivot = pd.concat([pivot, s_duration_h], axis=1)
 
         # add hours since timer start
-        now = pd.Timestamp.today()
-        select = pd.isnull(df_timer_filtered['end_time'])
-        start = df_timer_filtered[select]['start_time'].to_list()[0]
-        duration_running = (now - start).total_seconds() / 3600
-        pivot.at[start.date(), 'duration'] = duration_running + \
-            pivot.loc[start.date()]['duration']
+        if self.is_timer_running():
+            now = pd.Timestamp.today()
+            select = pd.isnull(df_timer_filtered['end_time'])
+            start = df_timer_filtered[select]['start_time'].to_list()[0]
+            duration_running = (now - start).total_seconds() / 3600
+            pivot.at[start.date(), 'duration'] = duration_running + \
+                pivot.loc[start.date()]['duration']
 
         # calculate weekly deficit
         required_hours = df_day_filtered['workhours'].sum()
