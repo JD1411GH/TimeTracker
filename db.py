@@ -3,6 +3,7 @@ import pandas as pd
 import configparser
 import os
 from datetime import *
+import threading
 
 # Import google apis
 import gspread
@@ -15,7 +16,7 @@ from utils import *
 config = configparser.ConfigParser()
 configfile = os.path.join(os.path.dirname(__file__), "config.ini")
 config.read(configfile)
-
+lock = threading.Lock()
 
 class Db:
     def __init__(self) -> None:
@@ -42,7 +43,17 @@ class Db:
         ws = sheet.worksheet('day')
         self.df_day = pd.DataFrame(ws.get_all_records())
 
-    def _gspread_write(self):
+    def _gspread_write(self, tab, data):
+        global lock
+        lock.acquire()
+        gc = gspread.oauth(credentials_filename='credentials.json',
+                    authorized_user_filename='token.json')
+        sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])            
+        ws = sheet.worksheet(tab)
+        ws.update([data.columns.values.tolist()] + data.values.tolist())
+        lock.release()
+
+    def _savedb(self):
         # convert timer database from timestamp to string
         def _to_str(timestamp):
             if timestamp is not None and not pd.isnull(timestamp):
@@ -52,21 +63,14 @@ class Db:
         _df_timer = pd.DataFrame()
         _df_timer['start_time'] = self.df_timer['start_time'].apply(_to_str)
         _df_timer['end_time'] = self.df_timer['end_time'].apply(_to_str)
+        th_timer = threading.Thread(target=self._gspread_write, args=['timer', _df_timer])
+        th_timer.start()
 
-        # write timer to gsheet
-        gc = gspread.oauth(credentials_filename='credentials.json',
-                        authorized_user_filename='token.json')
-        sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
-        ws = sheet.worksheet('timer')
-        ws.update([_df_timer.columns.values.tolist()] +
-                _df_timer.values.tolist())
-
-        # write day to gsheet
+        # prepare day for gsheet
         _df_day = self.df_day.reset_index()
         _df_day['date'] = _df_day['date'].apply(lambda d: d.isoformat())
-        ws = sheet.worksheet('day')
-        ws.update([_df_day.columns.values.tolist()] +
-                _df_day.values.tolist())
+        th_day = threading.Thread(target=self._gspread_write, args=['day', _df_day])
+        th_day.start()
 
     def get_week_data(self, wk=None):
         # check for empty database
@@ -142,18 +146,20 @@ class Db:
             })
             self.df_timer = pd.concat([self.df_timer, df_start], ignore_index=True)
             
-            # create entry for day
+        # create entry for day
+        today = pd.Timestamp.now().date()
+        if today not in self.df_day.index.to_list():
             _df_day = pd.DataFrame({
-                'date': [pd.Timestamp.now().date()],
+                'date': [today],
                 'workhours': [config['DEFAULT']['WORKHOURS']],
                 'correction': [0]
             })
             _df_day.set_index('date', inplace=True)
             self.df_day = pd.concat([self.df_day, _df_day])
 
-            # write to gsheet
-            self._gspread_write()
-            return True
+        # write to gsheet
+        self._savedb()
+        return True
 
 
     # return whether stop was successful
@@ -165,6 +171,6 @@ class Db:
         else:
             idx = self.df_timer[select].index.to_list()[0]
             self.df_timer.iloc[idx]['end_time'] = pd.Timestamp.now()
-            self._gspread_write()
+            self._savedb()
             return True
         
