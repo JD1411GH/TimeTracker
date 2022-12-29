@@ -1,7 +1,7 @@
 # import modules
-from ast import parse
 import os
 import argparse
+import platform
 
 # import internal modules
 from menu import *
@@ -18,7 +18,9 @@ def main():
     parser.add_argument('-u', '--ui', choices=['gui', 'cli'], default='cli')
     args = parser.parse_args()
 
-    if os.environ.get('ANDROID_ROOT') is not None or args.ui == 'gui':
+    # using platform.machine() to detect android
+    # hope to find a cleaner way in future
+    if platform.machine() == 'aarch64' or args.ui == 'gui':
         gui = Gui()
         gui.run()
     else:
