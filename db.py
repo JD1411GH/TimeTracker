@@ -18,6 +18,7 @@ configfile = os.path.join(os.path.dirname(__file__), "config.ini")
 config.read(configfile)
 lock = threading.Lock()
 
+
 class Db:
     def __init__(self) -> None:
         # get google sheet
@@ -25,14 +26,18 @@ class Db:
 
         # format the received data for timer
         if self.df_timer.size != 0:
-            self.df_timer['start_time'] = pd.to_datetime(self.df_timer['start_time'])
-            self.df_timer['end_time'] = pd.to_datetime(self.df_timer['end_time'])
+            self.df_timer['start_time'] = pd.to_datetime(
+                self.df_timer['start_time'])
+            self.df_timer['end_time'] = pd.to_datetime(
+                self.df_timer['end_time'])
 
         # format the received data for day
         if self.df_day.size != 0:
-            self.df_day['date'] = pd.to_datetime(self.df_day['date']).apply(lambda d: d.date())
+            self.df_day['date'] = pd.to_datetime(
+                self.df_day['date']).apply(lambda d: d.date())
             self.df_day.set_index('date', inplace=True)
-            self.df_day['correction'] = pd.to_numeric(self.df_day['correction'])
+            self.df_day['correction'] = pd.to_numeric(
+                self.df_day['correction'])
 
     def _gspread_read(self):
         gc = gspread.oauth(credentials_filename='credentials.json',
@@ -43,17 +48,19 @@ class Db:
         ws = sheet.worksheet('day')
         self.df_day = pd.DataFrame(ws.get_all_records())
 
-    def _gspread_write(self, tab, data):
-        global lock
-        lock.acquire()
-        gc = gspread.oauth(credentials_filename='credentials.json',
-                    authorized_user_filename='token.json')
-        sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])            
-        ws = sheet.worksheet(tab)
-        ws.update([data.columns.values.tolist()] + data.values.tolist())
-        lock.release()
-
     def _savedb(self):
+        # function to write to gspread
+        # scoping it so that it can't be called elsewhere
+        def _gspread_write(tab, data):
+            global lock
+            lock.acquire()
+            gc = gspread.oauth(credentials_filename='credentials.json',
+                               authorized_user_filename='token.json')
+            sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
+            ws = sheet.worksheet(tab)
+            ws.update([data.columns.values.tolist()] + data.values.tolist())
+            lock.release()
+
         # convert timer database from timestamp to string
         def _to_str(timestamp):
             if timestamp is not None and not pd.isnull(timestamp):
@@ -63,13 +70,14 @@ class Db:
         _df_timer = pd.DataFrame()
         _df_timer['start_time'] = self.df_timer['start_time'].apply(_to_str)
         _df_timer['end_time'] = self.df_timer['end_time'].apply(_to_str)
-        th_timer = threading.Thread(target=self._gspread_write, args=['timer', _df_timer])
+        th_timer = threading.Thread(
+            target=_gspread_write, args=['timer', _df_timer])
         th_timer.start()
 
         # prepare day for gsheet
         _df_day = self.df_day.reset_index()
         _df_day['date'] = _df_day['date'].apply(lambda d: d.isoformat())
-        th_day = threading.Thread(target=self._gspread_write, args=['day', _df_day])
+        th_day = threading.Thread(target=_gspread_write, args=['day', _df_day])
         th_day.start()
 
     def get_week_data(self, wk=None):
@@ -84,21 +92,23 @@ class Db:
             curweek = wk
         filter = self.df_timer['start_time'].apply(lambda x: x.week) == curweek
         df_timer_filtered = self.df_timer[filter]
-        filter = self.df_day.index.to_series().apply(lambda x: x.isocalendar()[1]) == curweek
+        filter = self.df_day.index.to_series().apply(
+            lambda x: x.isocalendar()[1]) == curweek
         df_day_filtered = self.df_day[filter]
 
         # create date and duration column
         s_date = df_timer_filtered['start_time'].apply(lambda t: t.date())
         s_date.rename('date', inplace=True)
         df_timer_filtered = pd.concat([df_timer_filtered, s_date], axis=1)
-        s_duration = df_timer_filtered['end_time'] - df_timer_filtered['start_time']
+        s_duration = df_timer_filtered['end_time'] - \
+            df_timer_filtered['start_time']
         s_duration.rename('duration', inplace=True)
-        df_timer_filtered = pd.concat([df_timer_filtered, s_duration], axis=1)        
+        df_timer_filtered = pd.concat([df_timer_filtered, s_duration], axis=1)
 
         # create pivot day-wise
         pivot = pd.pivot_table(data=df_timer_filtered,
                                index='date', values='duration', aggfunc='sum')
-        
+
         # add day of week
         list_days = []
         for (idx, row) in pivot.iterrows():
@@ -111,8 +121,9 @@ class Db:
 
         # append correction to duration
         s_duration_s = pivot['duration'].apply(lambda t: t.total_seconds())
-        s_duration_s = s_duration_s.add(df_day_filtered['correction'] * 60, fill_value=0)
-        s_duration_h = s_duration_s.div(3600).apply(lambda h: round(h,2))
+        s_duration_s = s_duration_s.add(
+            df_day_filtered['correction'] * 60, fill_value=0)
+        s_duration_h = s_duration_s.div(3600).apply(lambda h: round(h, 2))
         pivot.drop('duration', axis=1, inplace=True)
         s_duration_h.rename('duration', inplace=True)
         pivot = pd.concat([pivot, s_duration_h], axis=1)
@@ -132,15 +143,15 @@ class Db:
         s_delta = (self.df_timer['end_time'] - self.df_timer['start_time'])
         duration_hours = s_delta.sum().total_seconds() / 3600
         correction_hours = self.df_day['correction'].sum() / 60
-        deficit_overall = required_hours - (duration_hours + correction_hours)      
+        deficit_overall = required_hours - (duration_hours + correction_hours)
 
         return (round(deficit_overall, 2))
 
     def is_timer_running(self):
-        if self.df_timer.size == 0: 
+        if self.df_timer.size == 0:
             # check if empty database
             flgTimerRunning = False
-        else :      
+        else:
             flgTimerRunning = False
             select = self.df_timer['end_time'].isnull()
             rows, _ = self.df_timer[select].shape
@@ -149,7 +160,7 @@ class Db:
             elif rows == 1:
                 flgTimerRunning = True
             else:
-                flgTimerRunning = False        
+                flgTimerRunning = False
         return flgTimerRunning
 
     # return whether start was successful
@@ -163,8 +174,9 @@ class Db:
                 'start_time': [pd.Timestamp.now()],
                 'end_time': [None]
             })
-            self.df_timer = pd.concat([self.df_timer, df_start], ignore_index=True)
-            
+            self.df_timer = pd.concat(
+                [self.df_timer, df_start], ignore_index=True)
+
         # create entry for day
         today = pd.Timestamp.now().date()
         if today not in self.df_day.index.to_list():
@@ -180,8 +192,8 @@ class Db:
         self._savedb()
         return True
 
-
     # return whether stop was successful
+
     def stop_timer(self):
         select = self.df_timer['end_time'].isnull()
         nrows, _ = self.df_timer[select].shape
@@ -192,4 +204,11 @@ class Db:
             self.df_timer.iloc[idx]['end_time'] = pd.Timestamp.now()
             self._savedb()
             return True
-        
+
+    # cor is in mins and is written as is
+    def add_correction(self, cor):
+        today = pd.Timestamp.today().date()
+        curval = self.df_day.loc[today]['correction']
+        new_value = curval + cor
+        self.df_day.at[today, 'correction'] = new_value
+        self._savedb()

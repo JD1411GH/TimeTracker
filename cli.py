@@ -1,6 +1,7 @@
 # import global packages
 from ast import arg
 from threading import Thread
+from timeit import repeat
 import easygui
 
 # import local packages
@@ -13,17 +14,19 @@ from sedtimer import SedTimer
 class Cli:
     def __init__(self) -> None:
         self.th_main = Thread(target=self._th_main)
-        self.timerdb = Db()
+        self.db = Db()
         self.sed = SedTimer(self._handler_sed)
 
     def _th_main(self):
-        if self.timerdb.is_timer_running():
+        if self.db.is_timer_running():
             self.sed.start()
         self.show_menu()
 
-    def _handler_sed(self, msg):
-        res = easygui.ynbox("Time to take a walk. \n\nRepeat reminder?", "Sedentary reminder", ('Repeat', 'Cancel'))
-        print(res)
+    def _handler_sed(self, str):
+        repeat = easygui.ynbox(str,
+                               "Sedentary reminder", ('Repeat', 'Don\'t Repeat'))
+        if not repeat:
+            self.sed.cancel()
 
     def run(self):
         self.th_main.start()
@@ -42,22 +45,22 @@ class Cli:
             menu.show()
 
     def show_stats(self, wk=None):
-        (df, deficit_week) = self.timerdb.get_week_data(wk)
+        (df, deficit_week) = self.db.get_week_data(wk)
         if df is not None:
             mycls()
             print(df)
             print()
             print(f"weekly deficit: {deficit_week}")
 
-        deficit_overall = self.timerdb.get_deficit_overall()
+        deficit_overall = self.db.get_deficit_overall()
         print(f"overall deficit: {deficit_overall}")
 
-        print(f"timer running: {self.timerdb.is_timer_running()}")
+        print(f"timer running: {self.db.is_timer_running()}")
 
     def start_timer(self):
         # start the task timer
-        if not self.timerdb.is_timer_running():
-            status = self.timerdb.start_timer()
+        if not self.db.is_timer_running():
+            status = self.db.start_timer()
             myassert(status, "Timer could not be started")
 
         # start the sedentary timer
@@ -67,15 +70,17 @@ class Cli:
         self.show_menu()
 
     def stop_timer(self):
-        status = self.timerdb.stop_timer()
+        status = self.db.stop_timer()
         myassert(status, "Timer could not be stopped")
         self.show_menu()
 
     def add_correction(self):
-        pass
+        cor = input("Enter mins to add: ")
+        self.db.add_correction(int(cor))
+        self.show_menu()
 
     def mark_day(self):
-        pass
+        self.show_menu()
 
     def show_prev_stats(self):
-        pass
+        self.show_menu()

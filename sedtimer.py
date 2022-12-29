@@ -13,7 +13,8 @@ config.read(configfile)
 
 class SedTimer:
     def __init__(self, handler) -> None:
-        self.th_sed = Thread(target=self._th_timer, args=[handler,])
+        self.th_sed = Thread(target=self._th_timer, args=[
+                             handler, ], daemon=True)
         self.flg_cancel = False
         self.flg_stop = False
 
