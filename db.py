@@ -102,8 +102,8 @@ class Db:
             list_days.append(day_name[idx.weekday()])
         pivot['day'] = list_days
 
-        # add workday
-        pivot = pd.concat([pivot, df_day_filtered['workday']], axis=1)
+        # add workhours
+        pivot = pd.concat([pivot, df_day_filtered['workhours']], axis=1)
 
         # append correction to duration
         s_duration_s = pivot['duration'].apply(lambda t: t.total_seconds())
@@ -145,7 +145,7 @@ class Db:
             # create entry for day
             _df_day = pd.DataFrame({
                 'date': [pd.Timestamp.now().date()],
-                'workday': [1],
+                'workhours': [config['DEFAULT']['WORKHOURS']],
                 'correction': [0]
             })
             _df_day.set_index('date', inplace=True)
