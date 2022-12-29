@@ -3,6 +3,7 @@ from ast import arg
 from threading import Thread
 from timeit import repeat
 import easygui
+from prettytable import PrettyTable
 
 # import local packages
 from menu import *
@@ -18,8 +19,11 @@ class Cli:
         self.sed = SedTimer(self._handler_sed)
 
     def _th_main(self):
+        myassert(self.db.is_valid(), "Database is corrupt")
+
         if self.db.is_timer_running():
             self.sed.start()
+
         self.show_menu()
 
     def _handler_sed(self, str):
@@ -30,7 +34,6 @@ class Cli:
 
     def run(self):
         self.th_main.start()
-
 
     def show_menu(self):
         self.show_stats()
@@ -48,7 +51,15 @@ class Cli:
         (df, deficit_week) = self.db.get_week_data(wk)
         if df is not None:
             mycls()
-            print(df)
+            table = PrettyTable()
+            _fields = [df.index.name]
+            _fields.extend(df.columns.to_list())
+            table.field_names = _fields
+            for index, data in df.iterrows():
+                row = [index.isoformat()]
+                row.extend(data.to_list())
+                table.add_row(row)
+            print(table)
             print()
             print(f"weekly deficit: {deficit_week}")
 

@@ -1,4 +1,5 @@
 # import standard packages
+from select import select
 import pandas as pd
 import configparser
 import os
@@ -80,6 +81,15 @@ class Db:
         th_day = threading.Thread(target=_gspread_write, args=['day', _df_day])
         th_day.start()
 
+    def is_valid(self):
+        # check for multiple started timer
+        select = pd.isnull(self.df_timer['end_time'])
+        nrows, _ = self.df_timer[select].shape
+        if nrows > 1:
+            return False
+        else:
+            return True
+
     def get_week_data(self, wk=None):
         # check for empty database
         if self.df_timer.size == 0:
@@ -90,11 +100,11 @@ class Db:
             curweek = pd.Timestamp.today().week
         else:
             curweek = wk
-        filter = self.df_timer['start_time'].apply(lambda x: x.week) == curweek
-        df_timer_filtered = self.df_timer[filter]
-        filter = self.df_day.index.to_series().apply(
+        select = self.df_timer['start_time'].apply(lambda x: x.week) == curweek
+        df_timer_filtered = self.df_timer[select]
+        select = self.df_day.index.to_series().apply(
             lambda x: x.isocalendar()[1]) == curweek
-        df_day_filtered = self.df_day[filter]
+        df_day_filtered = self.df_day[select]
 
         # create date and duration column
         s_date = df_timer_filtered['start_time'].apply(lambda t: t.date())
@@ -123,15 +133,26 @@ class Db:
         s_duration_s = pivot['duration'].apply(lambda t: t.total_seconds())
         s_duration_s = s_duration_s.add(
             df_day_filtered['correction'] * 60, fill_value=0)
-        s_duration_h = s_duration_s.div(3600).apply(lambda h: round(h, 2))
+        s_duration_h = s_duration_s.div(3600)
         pivot.drop('duration', axis=1, inplace=True)
         s_duration_h.rename('duration', inplace=True)
         pivot = pd.concat([pivot, s_duration_h], axis=1)
+
+        # add hours since timer start
+        now = pd.Timestamp.today()
+        select = pd.isnull(df_timer_filtered['end_time'])
+        start = df_timer_filtered[select]['start_time'].to_list()[0]
+        duration_running = (now - start).total_seconds() / 3600
+        pivot.at[start.date(), 'duration'] = duration_running + \
+            pivot.loc[start.date()]['duration']
 
         # calculate weekly deficit
         required_hours = df_day_filtered['workhours'].sum()
         actual_hours = pivot['duration'].sum()
         deficit_week = round((required_hours - actual_hours), 2)
+
+        # round off duration to 2 decimal places
+        pivot['duration'] = pivot['duration'].apply(lambda x: round(x, 2))
 
         return (pivot, deficit_week)
 

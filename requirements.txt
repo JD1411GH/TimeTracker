@@ -8,3 +8,4 @@ configparser
 datetime
 timedelta
 easygui
+prettytable
