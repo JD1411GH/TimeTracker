@@ -136,24 +136,26 @@ class Db:
 
         return (round(deficit_overall, 2))
 
-    # return whether start was successful
-    def start_timer(self):
-        # Check if timer is already started
-        if self.df_timer.size == 0:
+    def is_timer_running(self):
+        if self.df_timer.size == 0: 
             # check if empty database
-            flgTimerStarted = False
+            flgTimerRunning = False
         else :      
-            flgTimerStarted = False
+            flgTimerRunning = False
             select = self.df_timer['end_time'].isnull()
             rows, _ = self.df_timer[select].shape
             if rows > 1:
                 return False
             elif rows == 1:
-                flgTimerStarted = True
+                flgTimerRunning = True
             else:
-                flgTimerStarted = False
+                flgTimerRunning = False        
+        return flgTimerRunning
 
-        if flgTimerStarted:
+    # return whether start was successful
+    def start_timer(self):
+        # Check if timer is already started
+        if self.is_timer_running():
             return True
         else:
             # create new timestamp and append to dataframe

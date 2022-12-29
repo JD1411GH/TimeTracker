@@ -38,6 +38,8 @@ class Cli:
         deficit_overall = self.timerdb.get_deficit_overall()
         print(f"overall deficit: {deficit_overall}")
 
+        print(f"timer running: {self.timerdb.is_timer_running()}")
+
     def start_timer(self):
         status = self.timerdb.start_timer()
         myassert(status, "Timer could not be started")
