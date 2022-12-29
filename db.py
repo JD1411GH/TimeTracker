@@ -80,8 +80,8 @@ class Db:
             curweek = wk
         filter = self.df_timer['start_time'].apply(lambda x: x.week) == curweek
         df_timer_filtered = self.df_timer[filter]
-        # filter = self.df_day.index.to_series().apply(lambda x: x.isocalendar()[1]) == curweek
-        # df_day_filtered = self.df_day[filter]
+        filter = self.df_day.index.to_series().apply(lambda x: x.isocalendar()[1]) == curweek
+        df_day_filtered = self.df_day[filter]
 
         # create date and duration column
         s_date = df_timer_filtered['start_time'].apply(lambda t: t.date())
@@ -103,11 +103,11 @@ class Db:
         pivot['day'] = list_days
 
         # add workday
-        # pivot = pd.concat([pivot, df_day_filtered['workday']], axis=1)
+        pivot = pd.concat([pivot, df_day_filtered['workday']], axis=1)
 
         # append correction to duration
         s_duration_s = pivot['duration'].apply(lambda t: t.total_seconds())
-        # s_duration_s = s_duration_s.add(df_day_filtered['correction'], fill_value=0)
+        s_duration_s = s_duration_s.add(df_day_filtered['correction'], fill_value=0)
         s_duration_h = s_duration_s.div(3600).apply(lambda h: round(h,2))
         pivot.drop('duration', axis=1, inplace=True)
         s_duration_h.rename('duration', inplace=True)
