@@ -107,7 +107,7 @@ class Db:
 
         # append correction to duration
         s_duration_s = pivot['duration'].apply(lambda t: t.total_seconds())
-        s_duration_s = s_duration_s.add(df_day_filtered['correction'], fill_value=0)
+        s_duration_s = s_duration_s.add(df_day_filtered['correction'] * 60, fill_value=0)
         s_duration_h = s_duration_s.div(3600).apply(lambda h: round(h,2))
         pivot.drop('duration', axis=1, inplace=True)
         s_duration_h.rename('duration', inplace=True)
