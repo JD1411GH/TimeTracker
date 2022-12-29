@@ -91,6 +91,18 @@ class Cli:
         self.show_menu()
 
     def mark_day(self):
+        # find entry to modify
+        df, _ = self.db.get_week_data()
+        menu = Menu(exit_handler=self.show_stats)
+        for date in df.index.to_list():
+            menu.add(MenuItem(date.isoformat()))
+        idx = menu.show()
+
+        # get new value and write
+        val = float(input("Enter new value (0, 0.5, 1) : "))
+        hours = val * float(config['DEFAULT']['WORKHOURS'])
+        self.db.update_workhours(df.iloc[idx-1].name, hours)
+
         self.show_menu()
 
     def show_prev_stats(self):

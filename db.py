@@ -233,3 +233,8 @@ class Db:
         new_value = curval + cor
         self.df_day.at[today, 'correction'] = new_value
         self._savedb()
+
+    # update work hours in days sheet
+    def update_workhours(self, date, hours):
+        self.df_day.at[date, 'workhours'] = hours
+        self._savedb()
