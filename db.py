@@ -149,7 +149,7 @@ class Db:
                 'correction': [0]
             })
             _df_day.set_index('date', inplace=True)
-            self.df_day = pd.concat([self.df_day, _df_day], axis=1)
+            self.df_day = pd.concat([self.df_day, _df_day])
 
             # write to gsheet
             self._gspread_write()
