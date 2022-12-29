@@ -120,7 +120,7 @@ class Db:
         # calculate weekly deficit
         required_hours = df_day_filtered['workhours'].sum()
         actual_hours = pivot['duration'].sum()
-        deficit_week = required_hours - actual_hours
+        deficit_week = round((required_hours - actual_hours), 2)
 
         return (pivot, deficit_week)
 

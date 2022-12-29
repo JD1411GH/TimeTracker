@@ -1,19 +1,33 @@
 # import global packages
 from ast import arg
-import threading
+from threading import Thread
+import easygui
 
 # import local packages
 from menu import *
 from db import *
 from utils import *
+from sedtimer import SedTimer
+
 
 class Cli:
     def __init__(self) -> None:
-        self.th_main = threading.Thread(target=self.show_menu)
+        self.th_main = Thread(target=self._th_main)
         self.timerdb = Db()
+        self.sed = SedTimer(self._handler_sed)
+
+    def _th_main(self):
+        if self.timerdb.is_timer_running():
+            self.sed.start()
+        self.show_menu()
+
+    def _handler_sed(self, msg):
+        res = easygui.ynbox("Time to take a walk. \n\nRepeat reminder?", "Sedentary reminder", ('Repeat', 'Cancel'))
+        print(res)
 
     def run(self):
         self.th_main.start()
+
 
     def show_menu(self):
         self.show_stats()
@@ -41,8 +55,15 @@ class Cli:
         print(f"timer running: {self.timerdb.is_timer_running()}")
 
     def start_timer(self):
-        status = self.timerdb.start_timer()
-        myassert(status, "Timer could not be started")
+        # start the task timer
+        if not self.timerdb.is_timer_running():
+            status = self.timerdb.start_timer()
+            myassert(status, "Timer could not be started")
+
+        # start the sedentary timer
+        if not self.sed.is_running():
+            self.sed.start()
+
         self.show_menu()
 
     def stop_timer(self):
