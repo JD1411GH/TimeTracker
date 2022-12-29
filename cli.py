@@ -121,3 +121,13 @@ class Cli:
                 week -= 1
             elif ret == 2:
                 week += 1
+
+
+if __name__ == "__main__":
+    try:
+        cli = Cli()
+        cli.run()
+    except (SystemExit, KeyboardInterrupt) as e:
+        pass
+    except:
+        myassert(False, "An exception has occurred.", True)
