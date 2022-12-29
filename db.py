@@ -93,7 +93,7 @@ class Db:
     def get_week_data(self, wk=None):
         # check for empty database
         if self.df_timer.size == 0:
-            return None
+            return (None, None)
 
         # filter for current week
         if wk is None:
@@ -105,6 +105,8 @@ class Db:
         select = self.df_day.index.to_series().apply(
             lambda x: x.isocalendar()[1]) == curweek
         df_day_filtered = self.df_day[select]
+        if df_timer_filtered.size == 0 or df_day_filtered.size == 0:
+            return (None, None)
 
         # create date and duration column
         s_date = df_timer_filtered['start_time'].apply(lambda t: t.date())

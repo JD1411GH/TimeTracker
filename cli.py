@@ -62,6 +62,8 @@ class Cli:
             print(table)
             print()
             print(f"weekly deficit: {deficit_week}")
+        else:
+            print("INFO: No data found")
 
         deficit_overall = self.db.get_deficit_overall()
         print(f"overall deficit: {deficit_overall}")
@@ -106,4 +108,16 @@ class Cli:
         self.show_menu()
 
     def show_prev_stats(self):
-        self.show_menu()
+        menu = Menu(self.show_menu)
+        menu.add(MenuItem("Prev"))
+        menu.add(MenuItem("Next"))
+
+        week = pd.Timestamp.today().week - 1
+        while(week > 0):
+            mycls()
+            self.show_stats(week)
+            ret = menu.show()
+            if ret == 1:
+                week -= 1
+            elif ret == 2:
+                week += 1
