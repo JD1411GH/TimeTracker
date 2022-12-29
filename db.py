@@ -117,7 +117,24 @@ class Db:
         s_duration_h.rename('duration', inplace=True)
         pivot = pd.concat([pivot, s_duration_h], axis=1)
 
-        return pivot
+        # calculate weekly deficit
+        required_hours = df_day_filtered['workhours'].sum()
+        actual_hours = pivot['duration'].sum()
+        deficit_week = required_hours - actual_hours
+
+        return (pivot, deficit_week)
+
+    def get_deficit_overall(self):
+        # required hours calculation
+        required_hours = self.df_day['workhours'].sum()
+
+        # actual hours calculation
+        s_delta = (self.df_timer['end_time'] - self.df_timer['start_time'])
+        duration_hours = s_delta.sum().total_seconds() / 3600
+        correction_hours = self.df_day['correction'].sum() / 60
+        deficit_overall = required_hours - (duration_hours + correction_hours)      
+
+        return (round(deficit_overall, 2))
 
     # return whether start was successful
     def start_timer(self):

@@ -5,7 +5,7 @@ import threading
 # import local packages
 from menu import *
 from db import *
-
+from utils import *
 
 class Cli:
     def __init__(self) -> None:
@@ -28,9 +28,15 @@ class Cli:
             menu.show()
 
     def show_stats(self, wk=None):
-        df = self.timerdb.get_week_data(wk)
+        (df, deficit_week) = self.timerdb.get_week_data(wk)
         if df is not None:
+            mycls()
             print(df)
+            print()
+            print(f"weekly deficit: {deficit_week}")
+
+        deficit_overall = self.timerdb.get_deficit_overall()
+        print(f"overall deficit: {deficit_overall}")
 
     def start_timer(self):
         status = self.timerdb.start_timer()
