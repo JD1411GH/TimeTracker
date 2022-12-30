@@ -4,6 +4,7 @@ from threading import Thread
 from timeit import repeat
 import easygui
 from prettytable import PrettyTable
+import time as tm
 
 # import local packages
 from menu import *
@@ -18,13 +19,22 @@ class Cli:
         self.db = Db()
         self.sed = SedTimer(self._handler_sed)
 
+        # periodic refresh
+        Thread(target=self._th_refresh, daemon=True).start()
+
     def _th_main(self):
         myassert(self.db.is_valid(), "Database is corrupt")
 
+        # resume sedentary timer
         if self.db.is_timer_running():
             self.sed.start()
 
         self.show_menu()
+
+    def _th_refresh(self):
+        while True:
+            tm.sleep(1 * 60)
+            # self.refresh() # FIXME: not working
 
     def _handler_sed(self, str):
         repeat = easygui.ynbox(str,
