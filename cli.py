@@ -50,6 +50,7 @@ class Cli:
         menu = Menu()
         menu.add(MenuItem("Start Timer", self.start_timer))
         menu.add(MenuItem("Stop Timer", self.stop_timer))
+        menu.add(MenuItem("Refresh and Start Timer", self.refresh_start))
         menu.add(MenuItem("Refresh", self.refresh))
         menu.add(MenuItem("Time Correction", self.add_correction))
         menu.add(MenuItem("Mark holiday / half day", self.mark_day))
@@ -100,6 +101,10 @@ class Cli:
     def refresh(self):
         self.db = Db()
         self.show_menu()
+
+    def refresh_start(self):
+        self.db = Db()
+        self.start_timer()
 
     def add_correction(self):
         cor = input("Enter mins to add: ")
