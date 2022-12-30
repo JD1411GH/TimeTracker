@@ -39,6 +39,7 @@ class Db:
             self.df_day.set_index('date', inplace=True)
             self.df_day['correction'] = pd.to_numeric(
                 self.df_day['correction'])
+            self.df_day['workhours'] = pd.to_numeric(self.df_day['workhours'])
 
     def _gspread_read(self):
         gc = gspread.oauth(credentials_filename='credentials.json',

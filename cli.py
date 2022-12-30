@@ -40,7 +40,7 @@ class Cli:
         menu = Menu()
         menu.add(MenuItem("Start Timer", self.start_timer))
         menu.add(MenuItem("Stop Timer", self.stop_timer))
-        menu.add(MenuItem("Refresh", self.show_menu))
+        menu.add(MenuItem("Refresh", self.refresh))
         menu.add(MenuItem("Time Correction", self.add_correction))
         menu.add(MenuItem("Mark holiday / half day", self.mark_day))
         menu.add(MenuItem("Show previous records", self.show_prev_stats))
@@ -85,6 +85,10 @@ class Cli:
     def stop_timer(self):
         status = self.db.stop_timer()
         myassert(status, "Timer could not be stopped")
+        self.show_menu()
+
+    def refresh(self):
+        self.db = Db()
         self.show_menu()
 
     def add_correction(self):
