@@ -176,7 +176,7 @@ class Db:
             select = pd.isnull(self.df_timer['end_time'])
             start = self.df_timer[select]['start_time'].to_list()[0]
             duration_running = (now - start).total_seconds() / 3600
-            deficit_overall += duration_running
+            deficit_overall -= duration_running
 
         return (round(deficit_overall, 2))
 
@@ -186,7 +186,7 @@ class Db:
             flgTimerRunning = False
         else:
             flgTimerRunning = False
-            select = self.df_timer['end_time'].isnull()
+            select = pd.isnull(self.df_timer['end_time'])
             rows, _ = self.df_timer[select].shape
             if rows > 1:
                 return False
