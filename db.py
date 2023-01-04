@@ -42,6 +42,7 @@ class Db:
             self.df_day['workhours'] = pd.to_numeric(self.df_day['workhours'])
 
     def _gspread_read(self):
+        print("Fetching data from google sheet")
         gc = gspread.oauth(credentials_filename='credentials.json',
                            authorized_user_filename='token.json')
         sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
@@ -168,7 +169,12 @@ class Db:
         s_delta = (self.df_timer['end_time'] - self.df_timer['start_time'])
         duration_hours = s_delta.sum().total_seconds() / 3600
         correction_hours = self.df_day['correction'].sum() / 60
-        deficit_overall = required_hours - (duration_hours + correction_hours)
+        now = pd.Timestamp.today()
+        select = pd.isnull(self.df_timer['end_time'])
+        start = self.df_timer[select]['start_time'].to_list()[0]
+        duration_running = (now - start).total_seconds() / 3600
+        deficit_overall = required_hours - \
+            (duration_hours + correction_hours + duration_running)
 
         return (round(deficit_overall, 2))
 
