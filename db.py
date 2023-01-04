@@ -207,7 +207,7 @@ class Db:
         if today not in self.df_day.index.to_list():
             _df_day = pd.DataFrame({
                 'date': [today],
-                'workhours': [config['DEFAULT']['WORKHOURS']],
+                'workhours': [float(config['DEFAULT']['WORKHOURS'])],
                 'correction': [0]
             })
             _df_day.set_index('date', inplace=True)
