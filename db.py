@@ -42,8 +42,13 @@ class Db:
             self.df_day['workhours'] = pd.to_numeric(self.df_day['workhours'])
 
     def _gspread_read(self):
-        gc = gspread.oauth(credentials_filename='credentials.json',
-                           authorized_user_filename='token.json')
+        try:
+            gc = gspread.oauth(credentials_filename='credentials.json',
+                               authorized_user_filename='token.json')
+        except:
+            os.remove("token.json")
+            gc = gspread.oauth(credentials_filename='credentials.json',
+                               authorized_user_filename='token.json')
         sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
         ws = sheet.worksheet('timer')
         self.df_timer = pd.DataFrame(ws.get_all_records())
@@ -56,8 +61,13 @@ class Db:
         def _gspread_write(tab, data):
             global lock
             lock.acquire()
-            gc = gspread.oauth(credentials_filename='credentials.json',
-                               authorized_user_filename='token.json')
+            try:
+                gc = gspread.oauth(credentials_filename='credentials.json',
+                                   authorized_user_filename='token.json')
+            except:
+                os.remove("token.json")
+                gc = gspread.oauth(credentials_filename='credentials.json',
+                                   authorized_user_filename='token.json')
             sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
             ws = sheet.worksheet(tab)
             ws.update([data.columns.values.tolist()] + data.values.tolist())

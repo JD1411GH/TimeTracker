@@ -3,3 +3,4 @@ rem Just create the shortcut to the batch file, then go to its properties, and c
 rem After that, the icon of the shortcut changes and you can drop it on the taskbar to pin it.
 echo Fetching data from google sheet
 python cli.py
+exit

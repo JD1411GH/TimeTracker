@@ -94,8 +94,10 @@ class Cli:
         self.show_menu()
 
     def stop_timer(self):
-        status = self.db.stop_timer()
-        myassert(status, "Timer could not be stopped")
+        if self.db.stop_timer():
+            self.sed.stop()
+        else:
+            print("Timer could not be stopped")
         self.show_menu()
 
     def refresh(self):
