@@ -152,7 +152,7 @@ class Db:
         pivot = pd.concat([pivot, s_duration_h], axis=1)
 
         # add hours since timer start
-        if self.is_timer_running():
+        if wk is None and self.is_timer_running():
             now = pd.Timestamp.today()
             select = pd.isnull(df_timer_filtered['end_time'])
             start = df_timer_filtered[select]['start_time'].to_list()[0]
