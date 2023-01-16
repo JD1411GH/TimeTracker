@@ -23,7 +23,11 @@ lock = threading.Lock()
 class Db:
     def __init__(self) -> None:
         # get google sheet
-        self._gspread_read()
+        try:
+            self._gspread_read()
+        except:
+            os.remove("token.json")
+            self._gspread_read()
 
         # format the received data for timer
         if self.df_timer.size != 0:
@@ -42,12 +46,7 @@ class Db:
             self.df_day['workhours'] = pd.to_numeric(self.df_day['workhours'])
 
     def _gspread_read(self):
-        try:
-            gc = gspread.oauth(credentials_filename='credentials.json',
-                               authorized_user_filename='token.json')
-        except:
-            os.remove("token.json")
-            gc = gspread.oauth(credentials_filename='credentials.json',
+        gc = gspread.oauth(credentials_filename='credentials.json',
                                authorized_user_filename='token.json')
         sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
         ws = sheet.worksheet('timer')
