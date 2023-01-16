@@ -59,9 +59,9 @@ class Cli:
             menu.show()
 
     def show_stats(self, wk=None):
+        mycls()
         (df, deficit_week) = self.db.get_week_data(wk)
         if df is not None:
-            mycls()
             table = PrettyTable()
             _fields = [df.index.name]
             _fields.extend(df.columns.to_list())
