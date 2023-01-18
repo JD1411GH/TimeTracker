@@ -45,9 +45,13 @@ class Db:
                 self.df_day['correction'])
             self.df_day['workhours'] = pd.to_numeric(self.df_day['workhours'])
 
+        # default initilize some instance variables
+        self.th_timer = None
+        self.th_day = None
+
     def _gspread_read(self):
         gc = gspread.oauth(credentials_filename='credentials.json',
-                               authorized_user_filename='token.json')
+                           authorized_user_filename='token.json')
         sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
         ws = sheet.worksheet('timer')
         self.df_timer = pd.DataFrame(ws.get_all_records())
@@ -78,18 +82,23 @@ class Db:
                 return timestamp.strftime('%Y-%m-%d %X')
             else:
                 return ""
+
         _df_timer = pd.DataFrame()
         _df_timer['start_time'] = self.df_timer['start_time'].apply(_to_str)
         _df_timer['end_time'] = self.df_timer['end_time'].apply(_to_str)
-        th_timer = threading.Thread(
+        self.th_timer = threading.Thread(
             target=_gspread_write, args=['timer', _df_timer])
-        th_timer.start()
+        self.th_timer.start()
 
         # prepare day for gsheet
         _df_day = self.df_day.reset_index()
         _df_day['date'] = _df_day['date'].apply(lambda d: d.isoformat())
-        th_day = threading.Thread(target=_gspread_write, args=['day', _df_day])
-        th_day.start()
+        self.th_day = threading.Thread(
+            target=_gspread_write, args=['day', _df_day])
+        self.th_day.start()
+
+    def is_save_ongoing(self):
+        return self.th_timer.isAlive() or self.th_day.isAlive()
 
     def is_valid(self):
         # check for multiple started timer

@@ -47,7 +47,7 @@ class Cli:
 
     def show_menu(self):
         self.show_stats()
-        menu = Menu()
+        menu = Menu(self.exit_handler)
         menu.add(MenuItem("Start Timer", self.start_timer))
         menu.add(MenuItem("Stop Timer", self.stop_timer))
         menu.add(MenuItem("Refresh", self.refresh))
@@ -57,6 +57,11 @@ class Cli:
         menu.add(MenuItem("Show previous records", self.show_prev_stats))
         while True:
             menu.show()
+
+    def exit_handler(self):
+        while self.db.is_save_ongoing():
+            pass
+        exit(0)
 
     def show_stats(self, wk=None):
         mycls()
