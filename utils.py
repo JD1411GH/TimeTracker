@@ -11,10 +11,9 @@ def myassert(cond, msg, raise_excep = False) :
             input("Press <enter> to exit...")
             os.abort()
 
-def mycls() :
+def clearscr() :
     if os.name =='posix' :
-        # os.system('clear')
-        pass
+        os.system('clear')
     elif os.name =='nt' :
         os.system('cls')
     else :
