@@ -6,10 +6,6 @@ import os
 from datetime import *
 import threading
 
-# Import google apis
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-
 # Import local packages
 from utils import *
 
@@ -23,11 +19,7 @@ lock = threading.Lock()
 class Db:
     def __init__(self) -> None:
         # get google sheet
-        try:
-            self._gspread_read()
-        except:
-            os.remove("token.json")
-            self._gspread_read()
+        self._gspread_read()
 
         # format the received data for timer
         if self.df_timer.size != 0:
@@ -50,13 +42,8 @@ class Db:
         self.th_day = None
 
     def _gspread_read(self):
-        gc = gspread.oauth(credentials_filename='credentials.json',
-                           authorized_user_filename='token.json')
-        sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
-        ws = sheet.worksheet('timer')
-        self.df_timer = pd.DataFrame(ws.get_all_records())
-        ws = sheet.worksheet('day')
-        self.df_day = pd.DataFrame(ws.get_all_records())
+        self.df_timer = pd.read_excel(config['DEFAULT']['XLS'], 'timer')
+        self.df_day = pd.read_excel(config['DEFAULT']['XLS'], 'day')
 
     def _savedb(self):
         # function to write to gspread
@@ -64,16 +51,8 @@ class Db:
         def _gspread_write(tab, data):
             global lock
             lock.acquire()
-            try:
-                gc = gspread.oauth(credentials_filename='credentials.json',
-                                   authorized_user_filename='token.json')
-            except:
-                os.remove("token.json")
-                gc = gspread.oauth(credentials_filename='credentials.json',
-                                   authorized_user_filename='token.json')
-            sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
-            ws = sheet.worksheet(tab)
-            ws.update([data.columns.values.tolist()] + data.values.tolist())
+            with pd.ExcelWriter(config['DEFAULT']['XLS'], mode='a', if_sheet_exists='replace', engine='openpyxl') as writer:
+                data.to_excel(writer, sheet_name=tab)
             lock.release()
 
         # convert timer database from timestamp to string
