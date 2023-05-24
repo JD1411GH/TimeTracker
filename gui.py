@@ -65,6 +65,8 @@ class MainLayout(GridLayout):
             if not status:
                 self.logger.log("Timer could not be started")
             else:
+                while(self.db.is_save_ongoing()):
+                    pass
                 self.logger.log("Timer started")
         else:
             self.logger.log("Timer is already running")
@@ -74,6 +76,8 @@ class MainLayout(GridLayout):
         if not status:
             self.logger.log("Timer could not be stopped")
         else:
+            while(self.db.is_save_ongoing()):
+                pass
             self.logger.log("Timer stopped")
 
     def exit(self, instance):
