@@ -13,7 +13,7 @@ def myassert(cond, msg, raise_excep = False) :
 
 def mycls() :
     if os.name =='posix' :
-        # os.system('clear')
+        os.system('clear')
         pass
     elif os.name =='nt' :
         os.system('cls')

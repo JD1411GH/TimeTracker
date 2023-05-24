@@ -2,7 +2,6 @@
 from ast import arg
 from threading import Thread
 from timeit import repeat
-# import easygui
 from prettytable import PrettyTable
 import time as tm
 
@@ -37,11 +36,7 @@ class Cli:
             # self.refresh() # FIXME: not working
 
     def _handler_sed(self, str):
-        repeat = input(str, "Sedentary reminder", '\n0. Cancel', '1. Repeat')
-        # repeat = easygui.ynbox(str,
-        #                        "Sedentary reminder", ('Repeat', 'Don\'t Repeat'))
-        if not repeat:
-            self.sed.cancel()
+        os.system(f"./snoretoast.exe -t 'TimeTracker' -m '{str}'")
 
     def run(self):
         self.th_main.start()
