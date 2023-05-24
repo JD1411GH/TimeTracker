@@ -9,7 +9,7 @@ from kivy.uix.textinput import TextInput
 from datetime import *
 
 # import local packages
-# from db import Db
+from db import Db
 
 
 class Logger:
@@ -38,7 +38,7 @@ class MainLayout(GridLayout):
         layout_button.add_widget(button_start)
         layout_button.add_widget(button_stop)
 
-        button_start.bind(on_press=self.refresh)
+        button_refresh.bind(on_press=self.refresh)
         button_start.bind(on_press=self.start)
         button_stop.bind(on_press=self.stop)
 
@@ -47,31 +47,29 @@ class MainLayout(GridLayout):
 
     def refresh(self, instance):
         self.logger.log("Reloading database...")
-        # self.db = None
-        # self.db = Db()
-        # if self.db.is_timer_running():
-        #     self.logger.log("Timer is running")
-        # else:
-        #     self.logger.log("Timer is stopped")
+        self.db = None
+        self.db = Db()
+        if self.db.is_timer_running():
+            self.logger.log("Timer is running")
+        else:
+            self.logger.log("Timer is stopped")
 
     def start(self, instance):
-        self.refresh(instance)
-        # if not self.db.is_timer_running():
-        #     status = self.db.start_timer()
-        #     if not status:
-        #         self.logger.log("Timer could not be started")
-        #     else:
-        #         self.logger.log("Timer started")
-        # else:
-        #     self.logger.log("Timer is already running")
+        if not self.db.is_timer_running():
+            status = self.db.start_timer()
+            if not status:
+                self.logger.log("Timer could not be started")
+            else:
+                self.logger.log("Timer started")
+        else:
+            self.logger.log("Timer is already running")
 
     def stop(self, instance):
-        self.refresh(instance)
-        # status = self.db.stop_timer()
-        # if not status:
-        #     self.logger.log("Timer could not be stopped")
-        # else:
-        #     self.logger.log("Timer stopped")
+        status = self.db.stop_timer()
+        if not status:
+            self.logger.log("Timer could not be stopped")
+        else:
+            self.logger.log("Timer stopped")
 
 
 class MainApp(App):
