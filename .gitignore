@@ -1,9 +1,11 @@
 # google credentials
 credentials.json
 token.json
+service_account.json
 
 # other files
 snoretoast.exe
+config.ini
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

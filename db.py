@@ -50,8 +50,7 @@ class Db:
         self.th_day = None
 
     def _gspread_read(self):
-        gc = gspread.oauth(credentials_filename='credentials.json',
-                           authorized_user_filename='token.json')
+        gc = gspread.service_account(filename="service_account.json")
         sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
         ws = sheet.worksheet('timer')
         self.df_timer = pd.DataFrame(ws.get_all_records())
@@ -64,13 +63,7 @@ class Db:
         def _gspread_write(tab, data):
             global lock
             lock.acquire()
-            try:
-                gc = gspread.oauth(credentials_filename='credentials.json',
-                                   authorized_user_filename='token.json')
-            except:
-                os.remove("token.json")
-                gc = gspread.oauth(credentials_filename='credentials.json',
-                                   authorized_user_filename='token.json')
+            gc = gspread.service_account(filename="service_account.json")
             sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
             ws = sheet.worksheet(tab)
             ws.update([data.columns.values.tolist()] + data.values.tolist())
@@ -257,7 +250,8 @@ class Db:
             return False
         else:
             idx = self.df_timer[select].index.to_list()[0]
-            self.df_timer.iloc[idx]['end_time'] = pd.Timestamp.now()
+            col = self.df_timer.columns.to_list().index('end_time')
+            self.df_timer.iat[idx,col] = pd.Timestamp.now()
             self._savedb()
             return True
 
