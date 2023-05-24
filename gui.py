@@ -28,20 +28,25 @@ class MainLayout(GridLayout):
         self.textinput = TextInput()
         self.add_widget(self.textinput)
 
-        layout_button = GridLayout(cols=3)
+        layout_button = GridLayout(cols=2)
         self.add_widget(layout_button)
 
-        button_refresh = Button(text='Refresh')
         button_start = Button(text='Start')
-        button_stop = Button(text='Stop')
-        layout_button.add_widget(button_refresh)
         layout_button.add_widget(button_start)
-        layout_button.add_widget(button_stop)
-
-        button_refresh.bind(on_press=self.refresh)
         button_start.bind(on_press=self.start)
+
+        button_stop = Button(text='Stop')
+        layout_button.add_widget(button_stop)
         button_stop.bind(on_press=self.stop)
 
+        button_refresh = Button(text='Refresh')
+        layout_button.add_widget(button_refresh)
+        button_refresh.bind(on_press=self.refresh)
+
+        button_exit = Button(text='Exit', background_color="red")
+        layout_button.add_widget(button_exit)
+        button_exit.bind(on_press=self.exit)
+        
         self.logger = Logger(self.textinput)
         self.refresh(None)
 
@@ -70,6 +75,11 @@ class MainLayout(GridLayout):
             self.logger.log("Timer could not be stopped")
         else:
             self.logger.log("Timer stopped")
+
+    def exit(self, instance):
+        while(self.db.is_save_ongoing()):
+            pass
+        App.get_running_app().stop()
 
 
 class MainApp(App):
