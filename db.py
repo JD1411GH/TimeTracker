@@ -23,11 +23,7 @@ lock = threading.Lock()
 class Db:
     def __init__(self) -> None:
         # get google sheet
-        try:
-            self._gspread_read()
-        except:
-            os.remove("token.json")
-            self._gspread_read()
+        self._gspread_read()
 
         # format the received data for timer
         if self.df_timer.size != 0:
