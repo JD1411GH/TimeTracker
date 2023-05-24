@@ -98,7 +98,12 @@ class Db:
         self.th_day.start()
 
     def is_save_ongoing(self):
-        return self.th_timer.isAlive() or self.th_day.isAlive()
+        is_alive = False
+        if self.th_timer and self.th_timer.is_alive():
+            is_alive = True
+        if self.th_day and self.th_day.is_alive():
+            is_alive = True
+        return is_alive
 
     def is_valid(self):
         # check for multiple started timer
