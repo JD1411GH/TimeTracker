@@ -96,7 +96,9 @@ class Cli:
 
     def stop_timer(self):
         if self.db.stop_timer():
+            print("Timer stopped")
             self.sed.stop()
+            print("Sed Timer stopped")
         else:
             print("Timer could not be stopped")
         self.show_menu()
