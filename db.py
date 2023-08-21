@@ -6,6 +6,10 @@ import os
 from datetime import *
 import threading
 
+# Import google apis
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
 # Import local packages
 from utils import *
 
