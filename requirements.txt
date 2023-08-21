@@ -2,5 +2,5 @@ pandas
 configparser
 datetime
 timedelta
-easygui
 prettytable
+kivy[base]

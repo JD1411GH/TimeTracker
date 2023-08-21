@@ -42,8 +42,12 @@ class Db:
         self.th_day = None
 
     def _gspread_read(self):
-        self.df_timer = pd.read_excel(config['DEFAULT']['XLS'], 'timer')
-        self.df_day = pd.read_excel(config['DEFAULT']['XLS'], 'day')
+        gc = gspread.service_account(filename="service_account.json")
+        sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
+        ws = sheet.worksheet('timer')
+        self.df_timer = pd.DataFrame(ws.get_all_records())
+        ws = sheet.worksheet('day')
+        self.df_day = pd.DataFrame(ws.get_all_records())
 
     def _savedb(self):
         # function to write to gspread
@@ -51,8 +55,10 @@ class Db:
         def _gspread_write(tab, data):
             global lock
             lock.acquire()
-            with pd.ExcelWriter(config['DEFAULT']['XLS'], mode='a', if_sheet_exists='replace', engine='openpyxl') as writer:
-                data.to_excel(writer, sheet_name=tab)
+            gc = gspread.service_account(filename="service_account.json")
+            sheet = gc.open_by_key(config['DEFAULT']['GSHEET_ID'])
+            ws = sheet.worksheet(tab)
+            ws.update([data.columns.values.tolist()] + data.values.tolist())
             lock.release()
 
         # convert timer database from timestamp to string
@@ -77,7 +83,12 @@ class Db:
         self.th_day.start()
 
     def is_save_ongoing(self):
-        return self.th_timer.isAlive() or self.th_day.isAlive()
+        is_alive = False
+        if self.th_timer and self.th_timer.is_alive():
+            is_alive = True
+        if self.th_day and self.th_day.is_alive():
+            is_alive = True
+        return is_alive
 
     def is_valid(self):
         # check for multiple started timer
@@ -231,7 +242,8 @@ class Db:
             return False
         else:
             idx = self.df_timer[select].index.to_list()[0]
-            self.df_timer.iloc[idx]['end_time'] = pd.Timestamp.now()
+            col = self.df_timer.columns.to_list().index('end_time')
+            self.df_timer.iat[idx,col] = pd.Timestamp.now()
             self._savedb()
             return True
 
