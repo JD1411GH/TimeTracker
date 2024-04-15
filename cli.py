@@ -92,6 +92,12 @@ class Cli:
         if not self.sed.is_running():
             self.sed.start()
 
+        # if this is the first entry of the day, mark HOP
+        if self.db.is_first_entry():
+            hop = input("Are you working from office (y/n)? ")
+            if hop.lower() == "y":
+                self.db.set_hop(1)
+
         self.show_menu()
 
     def stop_timer(self):

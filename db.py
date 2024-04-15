@@ -103,6 +103,13 @@ class Db:
         else:
             return True
 
+    def is_first_entry_of_day(self):
+        today = pd.Timestamp.now().date()
+        if today not in self.df_day.index.to_list():
+            return True
+        else:
+            return False
+
     def get_week_data(self, wk=None):
         # check for empty database
         if self.df_timer.size == 0:
@@ -162,13 +169,17 @@ class Db:
             pivot.at[start.date(), 'duration'] = duration_running + \
                 pivot.loc[start.date()]['duration']
 
+        # round off duration to 2 decimal places
+        pivot['duration'] = pivot['duration'].apply(lambda x: round(x, 2))
+        
+        # add HOP data
+        # print(self.df_day.loc[pd.to_datetime('2024-04-15').date()])
+        pivot['HOP'] = df_day_filtered['HOP'].to_list()
+
         # calculate weekly deficit
         required_hours = df_day_filtered['workhours'].sum()
         actual_hours = pivot['duration'].sum()
         deficit_week = round((required_hours - actual_hours), 2)
-
-        # round off duration to 2 decimal places
-        pivot['duration'] = pivot['duration'].apply(lambda x: round(x, 2))
 
         return (pivot, deficit_week)
 
@@ -208,9 +219,16 @@ class Db:
                 flgTimerRunning = False
         return flgTimerRunning
 
+    def set_hop(self, value):
+        today = pd.Timestamp.today().date()
+        self.df_day.at[today, 'HOP'] = value
+        self._savedb()
+
+
     # return whether start was successful
     def start_timer(self):
         # Check if timer is already started
+        # TODO: violation of single responsibility. db shall not be aware of timer.
         if self.is_timer_running():
             return True
         else:
@@ -223,6 +241,7 @@ class Db:
                 [self.df_timer, df_start], ignore_index=True)
 
         # create entry for day
+        # TODO: violation of single responsibility.
         today = pd.Timestamp.now().date()
         if today not in self.df_day.index.to_list():
             _df_day = pd.DataFrame({
