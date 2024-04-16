@@ -4,6 +4,7 @@ from threading import Thread
 from timeit import repeat
 from prettytable import PrettyTable
 import time as tm
+import subprocess
 
 # import local packages
 from menu import *
@@ -38,26 +39,19 @@ class Cli:
     def _handler_sed(self, str):
         os.system(f"./snoretoast.exe -t 'TimeTracker' -m '{str}'")
 
+    def _get_wifi_networks(self):
+        # CAUTION: this function is only for WSL
+        output = subprocess.check_output(["/mnt/c/Windows/System32/netsh.exe", "wlan", "show", "networks"]).decode("utf-8")
+        networks = []
+        # Parse the output to extract network SSIDs (names)
+        for line in output.splitlines()[4:]:
+            if line.startswith("SSID"):
+                ssid = line.split(":")[1].strip()
+                networks.append(ssid)
+        return networks
+
     def run(self):
         self.th_main.start()
-
-    def show_menu(self):
-        self.show_stats()
-        menu = Menu(self.exit_handler)
-        menu.add(MenuItem("Start Timer", self.start_timer))
-        menu.add(MenuItem("Stop Timer", self.stop_timer))
-        menu.add(MenuItem("Refresh", self.refresh))
-        menu.add(MenuItem("Refresh and Start Timer", self.refresh_start))
-        menu.add(MenuItem("Time Correction", self.add_correction))
-        menu.add(MenuItem("Mark holiday / half day", self.mark_day))
-        menu.add(MenuItem("Show previous records", self.show_prev_stats))
-        while True:
-            menu.show()
-
-    def exit_handler(self):
-        while self.db.is_save_ongoing():
-            pass
-        exit(0)
 
     def show_stats(self, wk=None):
         mycls()
@@ -82,6 +76,24 @@ class Cli:
 
         print(f"timer running: {self.db.is_timer_running()}")
 
+    def show_menu(self):
+        self.show_stats()
+        menu = Menu(self.exit_handler)
+        menu.add(MenuItem("Start Timer", self.start_timer))
+        menu.add(MenuItem("Stop Timer", self.stop_timer))
+        menu.add(MenuItem("Refresh", self.refresh))
+        menu.add(MenuItem("Refresh and Start Timer", self.refresh_start))
+        menu.add(MenuItem("Time Correction", self.add_correction))
+        menu.add(MenuItem("Mark holiday / half day", self.mark_day))
+        menu.add(MenuItem("Show previous records", self.show_prev_stats))
+        while True:
+            menu.show()
+
+    def exit_handler(self):
+        while self.db.is_save_ongoing():
+            pass
+        exit(0)
+
     def start_timer(self):
         # start the task timer
         if not self.db.is_timer_running():
@@ -92,11 +104,10 @@ class Cli:
         if not self.sed.is_running():
             self.sed.start()
 
-        # if this is the first entry of the day, mark HOP
-        if self.db.is_first_entry():
-            hop = input("Are you working from office (y/n)? ")
-            if hop.lower() == "y":
-                self.db.set_hop(1)
+        # if office wifi network is detected, mark HOP.
+        list_wifi = self._get_wifi_networks()
+        if "BWSMD" in list_wifi:
+            self.db.set_hop(1)
 
         self.show_menu()
 

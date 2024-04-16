@@ -72,6 +72,7 @@ class Db:
             else:
                 return ""
 
+        # write timer sheet
         _df_timer = pd.DataFrame()
         _df_timer['start_time'] = self.df_timer['start_time'].apply(_to_str)
         _df_timer['end_time'] = self.df_timer['end_time'].apply(_to_str)
@@ -171,10 +172,9 @@ class Db:
 
         # round off duration to 2 decimal places
         pivot['duration'] = pivot['duration'].apply(lambda x: round(x, 2))
-        
-        # add HOP data
-        # print(self.df_day.loc[pd.to_datetime('2024-04-15').date()])
-        pivot['HOP'] = df_day_filtered['HOP'].to_list()
+
+        # HOP data
+        pivot['HOP'] = df_day_filtered['HOP']
 
         # calculate weekly deficit
         required_hours = df_day_filtered['workhours'].sum()
@@ -247,7 +247,8 @@ class Db:
             _df_day = pd.DataFrame({
                 'date': [today],
                 'workhours': [float(config['DEFAULT']['WORKHOURS'])],
-                'correction': [0]
+                'correction': [0],
+                'HOP': [0]
             })
             _df_day.set_index('date', inplace=True)
             self.df_day = pd.concat([self.df_day, _df_day])
