@@ -146,6 +146,10 @@ class Cli:
         hours = val * float(config['DEFAULT']['WORKHOURS'])
         self.db.update_workhours(df.iloc[idx-1].name, hours)
 
+        # Set HOP for holiday
+        if val == 0:
+            self.db.set_hop(1)
+
         self.show_menu()
 
     def show_prev_stats(self):
