@@ -90,6 +90,7 @@ class Cli:
         menu.add(MenuItem("Time Correction", self.add_correction))
         menu.add(MenuItem("Mark holiday / half day", self.mark_day))
         menu.add(MenuItem("Show previous records", self.show_prev_stats))
+        menu.add(MenuItem("Mark HOP", self.mark_hop))
         while True:
             menu.show()
 
@@ -154,6 +155,14 @@ class Cli:
         if val == 0:
             self.db.set_hop(1)
 
+        self.show_menu()
+
+    def mark_hop(self):
+        hop = input("Are you working from office (y/n)? ")
+        if hop == "y":
+            self.db.set_hop(1)
+        else:
+            self.db.set_hop(0)
         self.show_menu()
 
     def show_prev_stats(self):
