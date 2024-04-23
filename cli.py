@@ -5,6 +5,7 @@ from timeit import repeat
 from prettytable import PrettyTable
 import time as tm
 import subprocess
+import datetime
 
 # import local packages
 from menu import *
@@ -73,8 +74,11 @@ class Cli:
 
         deficit_overall = self.db.get_deficit_overall()
         print(f"overall deficit: {deficit_overall}")
-
         print(f"timer running: {self.db.is_timer_running()}")
+
+        # get HOP count for current month
+        month = datetime.today().month
+        print(f"monthly HOP: {self.db.get_hop_count(month)}")
 
     def show_menu(self):
         self.show_stats()

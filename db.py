@@ -183,6 +183,12 @@ class Db:
 
         return (pivot, deficit_week)
 
+    def get_hop_count(self, month=datetime.today().month):
+        select = self.df_day.index.to_series().apply(
+            lambda x: x.month) == month
+        df_month = self.df_day[select]
+        return df_month['HOP'].sum()
+
     def get_deficit_overall(self):
         # required hours calculation
         required_hours = self.df_day['workhours'].sum()
