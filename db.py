@@ -87,6 +87,20 @@ class Db:
             target=_gspread_write, args=['day', _df_day])
         self.th_day.start()
 
+    def _add_day(self, dat=None, correction=0, workhours=float(config['DEFAULT']['WORKHOURS']), HOP=0):
+        if dat is None:
+            dat = pd.Timestamp.today().date()
+        if dat not in self.df_day.index.to_list():
+            _df_day = pd.DataFrame({
+                'date': [dat],
+                'workhours': [workhours],
+                'correction': [correction],
+                'HOP': [HOP]
+            })
+            _df_day.set_index('date', inplace=True)
+            self.df_day = pd.concat([self.df_day, _df_day])
+        # invoke self._savedb() from the calling function
+
     def is_save_ongoing(self):
         is_alive = False
         if self.th_timer and self.th_timer.is_alive():
@@ -225,9 +239,19 @@ class Db:
                 flgTimerRunning = False
         return flgTimerRunning
 
-    def set_hop(self, value):
-        today = pd.Timestamp.today().date()
-        self.df_day.at[today, 'HOP'] = value
+    def set_hop(self, value, dat=None):
+        # handle default value
+        if dat== None:
+            dat = pd.Timestamp.today().date()
+        else:
+            dat = pd.Timestamp(dat).date()
+            
+        # if dat is not in the database, add it
+        if dat not in self.df_day.index.to_list():
+            self._add_day(dat)
+
+        # mark HOP for the date
+        self.df_day.at[dat, 'HOP'] = value
         self._savedb()
 
 
@@ -246,18 +270,10 @@ class Db:
             self.df_timer = pd.concat(
                 [self.df_timer, df_start], ignore_index=True)
 
-        # create entry for day
-        # TODO: violation of single responsibility.
+        # create entry for today
         today = pd.Timestamp.now().date()
         if today not in self.df_day.index.to_list():
-            _df_day = pd.DataFrame({
-                'date': [today],
-                'workhours': [float(config['DEFAULT']['WORKHOURS'])],
-                'correction': [0],
-                'HOP': [0]
-            })
-            _df_day.set_index('date', inplace=True)
-            self.df_day = pd.concat([self.df_day, _df_day])
+            self._add_day()
 
         # write to gsheet
         self._savedb()

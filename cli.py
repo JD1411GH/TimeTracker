@@ -158,11 +158,18 @@ class Cli:
         self.show_menu()
 
     def mark_hop(self):
-        hop = input("Are you working from office (y/n)? ")
-        if hop == "y":
-            self.db.set_hop(1)
+        dat = input("Enter date in YYYY-MM-DD format (press enter for today): ")
+        hop = input("Mark HOP? (y/n): ")
+        if dat == "":
+            if hop == "y":
+                self.db.set_hop(1)
+            else:
+                self.db.set_hop(0)
         else:
-            self.db.set_hop(0)
+            if hop == "y":
+                self.db.set_hop(1, pd.to_datetime(dat))
+            else:
+                self.db.set_hop(0, pd.to_datetime(dat))
         self.show_menu()
 
     def show_prev_stats(self):
