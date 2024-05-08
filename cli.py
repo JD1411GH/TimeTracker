@@ -58,6 +58,7 @@ class Cli:
         mycls()
         (df, deficit_week) = self.db.get_week_data(wk)
         if df is not None:
+            df = df.sort_index()
             table = PrettyTable()
             _fields = [df.index.name]
             _fields.extend(df.columns.to_list())
