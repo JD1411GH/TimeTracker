@@ -112,7 +112,8 @@ class Cli:
 
         # if office wifi network is detected, mark HOP.
         list_wifi = self._get_wifi_networks()
-        if "BWSMD" in list_wifi:
+        print(list_wifi)
+        if "BWSMD" in list_wifi or "BWSOA" in list_wifi:
             self.db.set_hop(1)
 
         self.show_menu()
